@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Everyday Income & Expense Tracker</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon-192.png" />
+  <meta name="theme-color" content="#28a745" />
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { margin: 0; padding: 20px; background-color: #f4f4f4; }
+    .container { max-width: 600px; margin: auto; background: #fff; padding: 20px;
+      border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h2 { text-align: center; color: #333; }
+    input, select, button { width: 100%; padding: 12px; margin-top: 10px; 
+      margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px; }
+    button { background-color: #28a745; color: white; font-weight: bold; 
+      cursor: pointer; border: none; }
+    button:hover { background-color: #218838; }
+    .summary { text-align: center; margin-bottom: 20px; }
+    .summary div { font-size: 1.1em; margin: 5px 0; }
+    .transactions { max-height: 300px; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background-color: #f8f9fa; }
+    @media screen and (max-width: 600px) {
+      .container { padding: 15px; }
+    }
+  </style>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(reg => console.log('Service Worker registered!', reg))
+          .catch(err => console.log('Service Worker failed: ', err));
+      });
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h2>Income & Expense Tracker</h2>
+    <div class="summary">
+      <div>Total Income: $<span id="total-income">0</span></div>
+      <div>Total Expenses: $<span id="total-expense">0</span></div>
+      <div><strong>Balance: $<span id="balance">0</span></strong></div>
+    </div>
+    <form id="transaction-form">
+      <select id="type">
+        <option value="income">Income</option>
+        <option value="expense">Expense</option>
+      </select>
+      <input type="number" id="amount" placeholder="Amount" required />
+      <input type="text" id="category" placeholder="Category (e.g. Food, Salary)" required />
+      <input type="date" id="date" required />
+      <input type="text" id="note" placeholder="Note (optional)" />
+      <button type="submit">Add Transaction</button>
+    </form>
+    <div class="transactions">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Category</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody id="transaction-list"></tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    let transactions = [];
+    document.getElementById('transaction-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const type = document.getElementById('type').value;
+      const amount = parseFloat(document.getElementById('amount').value);
+      const category = document.getElementById('category').value;
+      const date = document.getElementById('date').value;
+      const note = document.getElementById('note').value;
+      const transaction = { type, amount, category, date, note };
+      transactions.push(transaction);
+      updateTable();
+      updateSummary();
+      document.getElementById('transaction-form').reset();
+    });
+    function updateTable() {
+      const list = document.getElementById('transaction-list');
+      list.innerHTML = '';
+      transactions.slice().reverse().forEach(tx => {
+        const row = `<tr>
+          <td>${tx.date}</td>
+          <td>${tx.type}</td>
+          <td>$${tx.amount.toFixed(2)}</td>
+          <td>${tx.category}</td>
+          <td>${tx.note}</td>
+        </tr>`;
+        list.innerHTML += row;
+      });
+    }
+    function updateSummary() {
+      let income = 0, expense = 0;
+      transactions.forEach(tx => {
+        if (tx.type === 'income') income += tx.amount;
+        else expense += tx.amount;
+      });
+      document.getElementById('total-income').innerText = income.toFixed(2);
+      document.getElementById('total-expense').innerText = expense.toFixed(2);
+      document.getElementById('balance').innerText = (income - expense).toFixed(2);
+    }
+  </script>
+</body>
+</html>
